@@ -61,8 +61,9 @@ fprintf('Closed-loop RMSE over horizon: %.4g\n', rmse);
 
 % Plots 
 t  = 1:T; 
-tp = (k+1):(k+Np);
-y_hat_full = nan(Ny,T); y_hat_full(:,tp) = y_pred_mat;
+tp = (k+1):(k+Np);              %Predicted timesteps
+y_hat_full = nan(Ny,T); 
+y_hat_full(:,tp) = y_pred_mat;
 
 figure;
 subplot(3,1,1);

@@ -30,7 +30,7 @@ x = zeros(1,1);
 y = zeros(Ny,T);
 for k=1:T-1
     y(:,k) = C*x + D*u(:,k);
-    x = Atil*x + Btil*u(:,k) + K*y(:,k);   % innovation recursion
+    x = Atil*x + Btil*u(:,k) + K*y(:,k);   % we dont care about state evolution, just about output
 end
 y(:,T) = C*x + D*u(:,T);
 
