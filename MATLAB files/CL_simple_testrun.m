@@ -1,4 +1,4 @@
-%% Closed-loop test (state feedback via place + prefilter for unit DC gain)
+%% Closed-loop test
 
 rng(4);
 
@@ -14,7 +14,7 @@ p_cl = 0.5;
 K   = place(A, B, p_cl);  
 
 Acl  = A - B*K;
-Gr = 1 / ( C * ((eye(size(A)) - Acl) \ B) + D );  % prefilter for unit DC gain
+Gr = 1 / ( C * ((eye(size(A)) - Acl) \ B) + D ); 
 
 % Simulation settings
 T  = 1400;
@@ -34,7 +34,8 @@ for k = 1:T-1
 end
 y(:,T) = C*x + D*u(:,T);
 
-% solve LS and build predictor
+% solve RLS and build predictor recursively
+
 p  = 25; 
 Np = 30;
 
