@@ -4,6 +4,21 @@ function [Theta, S, sigma, G] = SCRLS(Theta, S, phi, y, lambda, sigma)
 %   Using the Square-root Covariance RLS algorithm as described in
 %   "Round-off Error Propagation in Four Generally-Applicable, Recursive,
 %   Least-Squares Estimation Schemes" by Verhaegen et al.
+%   Inputs:
+%       Theta   - Previous Markov Parameters
+%       S       - Previous Cholesky factor of Covariance
+%       phi     - New data vector 
+%       y       - New output measurement
+%       lambda  - Forgetting factor
+%       sigma   - Previous estimate of standard deviation
+%
+%   Outputs:
+%       Theta   - Updated Markov Parameters
+%       S       - Updated Cholesky factor of Covariance
+%       sigma   - Updated estimate of standard deviation
+%       G       - Matrix used in computation (not sure if we even need to return this atm)
+
+
 
     % Build the pre-matrix as described in the paper
 
@@ -23,7 +38,12 @@ function [Theta, S, sigma, G] = SCRLS(Theta, S, phi, y, lambda, sigma)
     % Parameter update
     r = y - (Theta * phi);                   % Ny x 1 residual
     
-    %size(G)
-    %size(r')
-    Theta = Theta + (G' / sigma) * (r.');       
+    size(G')
+    size(r')
+    size(Theta)
+    Theta = Theta + (sqrt(lambda) / sigma)* r * G';
+    
+    % Fix sigma to 1, this is the only way it works at the moment. I see
+    % that the piezoelectric paper also isn't working with an updated sigma
+    sigma = 1;
 end
