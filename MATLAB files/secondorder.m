@@ -13,7 +13,7 @@ dt = 0.1;       % Time step [s]
 p = 200;        % Past data window
 t_past = dt*p;  % Past simulated time [s]
 
-% Define noise to achieve persistently exciting inputs
+
 Tau_stddev = 0.5;  
 Beta_stddev = 0.5; 
 WindSpeed_stddev = 0.1;

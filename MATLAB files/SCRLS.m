@@ -38,12 +38,12 @@ function [Theta, S, sigma, G] = SCRLS(Theta, S, phi, y, lambda, sigma)
     % Parameter update
     r = y - (Theta * phi);                   % Ny x 1 residual
     
-    size(G')
-    size(r')
-    size(Theta)
+    %size(G')
+    %size(r')
+    %size(Theta)
     Theta = Theta + (sqrt(lambda) / sigma)* r * G';
-    
+
     % Fix sigma to 1, this is the only way it works at the moment. I see
     % that the piezoelectric paper also isn't working with an updated sigma
-    sigma = 1;
+    %sigma = 1;
 end
