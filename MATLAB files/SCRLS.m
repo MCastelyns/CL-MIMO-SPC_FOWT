@@ -21,7 +21,6 @@ function [Theta, S, sigma, G] = SCRLS(Theta, S, phi, y, lambda, sigma)
 
 
     % Build the pre-matrix as described in the paper
-
     Pre = [sqrt(lambda)*sigma , phi'*S;
            zeros(size(S,1),1) , S/sqrt(lambda)];
     
@@ -36,10 +35,12 @@ function [Theta, S, sigma, G] = SCRLS(Theta, S, phi, y, lambda, sigma)
     S     = Post(2:end, 2:end);   
 
     % Parameter update
-    r = y - (Theta * phi);                   % Ny x 1 residual
+    %size(y)
+    %size(Theta*phi)
+    r = y' - (Theta * phi);                   % Ny x 1 residual
     
+    %size(r)
     %size(G')
-    %size(r')
     %size(Theta)
     Theta = Theta + (sqrt(lambda) / sigma)* r * G';
 
