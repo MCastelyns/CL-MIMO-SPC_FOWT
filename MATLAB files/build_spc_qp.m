@@ -30,14 +30,14 @@ beq = - E' * (S0*z_p + v0);
 
 % Disturbance trajectory (for now fixed at 0, might want to implement
 % forecasted wind speeds here later)
-d_traj = zeros(Np,1);
+% d_traj = zeros(Np,1);
 
 % Equality constraints: enforce disturbance input = d_traj
-Aeq_dist = kron(eye(Np), [0 0 1]);   
-beq_dist = d_traj;
+% Aeq_dist = kron(eye(Np), [0 0 1]);   
+% beq_dist = d_traj;
 
-Aeq = [Aeq; Aeq_dist];
-beq = [beq; beq_dist];
+% Aeq = [Aeq; Aeq_dist];
+% beq = [beq; beq_dist];
 
 
 lb  = repmat(umin, Np, 1);

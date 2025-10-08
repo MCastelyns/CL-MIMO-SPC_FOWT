@@ -10,11 +10,12 @@ Np       = 50;              % prediction horizon
 Nc       = 1;               % control horizon
 
 % Excitation stddev per input: [beta(rad); tau(Nm); wind(m/s)]
-std_u = [0.03; 100; 0.1];
+%std_u = [0.03; 100; 0.1];
+ampl_u = [0.03; 100; 0.1];
 % std_u = [0.03; 3e4; 0.3];
 
 % Weights
-Qy  = diag([100; 10]);
+Qy  = diag([100; 10000]);
 Ru  = diag([1; 1; 0.1]);
 Rdu = diag([0.1; 0.1; 0.1]);
 
@@ -33,9 +34,19 @@ sysd  = c2d(sys, Ts);
 
 
 u_batch = zeros(Nu, Tbatch);
-u_batch(1,:) = std_u(1) * randn(1, Tbatch);      % beta
-u_batch(2,:) = std_u(2) * randn(1, Tbatch);      % tau
-u_batch(3,:) = std_u(3) * randn(1, Tbatch);      % V
+
+%u_batch(1,:) = std_u(1) * randn(1, Tbatch);          % beta
+%u_batch(2,:) = std_u(2) * randn(1, Tbatch);          % tau
+%u_batch(3,:) = std_u(3) * randn(1, Tbatch);          % V
+
+time_batch = Tbatch*Ts;
+F = 1; % Cutoff frequency of prbs
+temp = idprbs(time_batch, ampl_u(1),Ts, F)';
+u_batch(1,:) = temp(1:Tbatch);              % beta
+temp = idprbs(time_batch, ampl_u(2),Ts, F)';
+u_batch(2,:) = temp(1:Tbatch);              % tau
+%temp = idprbs(time_batch, ampl_u(3),Ts, F)';
+%u_batch(3,:) = temp(1:Tbatch);              % V
 
 % Simulate true plant for batch segment
 x = zeros(size(A,1),1);
@@ -88,8 +99,8 @@ u(:,1:p+1) = u_batch(:, Tbatch-p : Tbatch);
 y(:,1:p+1) = y_batch(:, Tbatch-p : Tbatch);
 
 
-P0    = inv(Phis*Phis' + rho*eye(m));   % information matrix on scaled regressor
-Srls  = chol(P0,'lower');               % square-root factor (like your good script)
+P0    = inv(Phis*Phis' + rho*eye(m));    
+Srls  = chol(P0,'lower');               
 eLS   = Y - ThetaS*Phis;
 sigma = sqrt(mean(eLS(:).^2) + eps);
 
@@ -113,7 +124,7 @@ r = zeros(Ny, T_online+1);
 % CL SPC 
 
 for k = (p+1):T_online
-    k
+    if mod(k,100)==0, fprintf('k=%d\n', k); end
     idx = (k-p):(k-1);
 
     z_p = reshape([u(:,idx); y(:,idx)], [], 1);
@@ -124,6 +135,7 @@ for k = (p+1):T_online
     phis = phi ./ s;                
     y_now = y(:,k);
     [ThetaS, Srls, sigma] = SCRLS(ThetaS, Srls, phis, y_now', lambda, sigma);
+    sigma = abs(sigma);
     Theta = ThetaS ./ s.';          % unscale 
 
 
@@ -149,7 +161,7 @@ for k = (p+1):T_online
 
     u_apply = U_tilde(1:Nu);
     % Wind = disturbance: add noise
-    u_apply(3) = u_apply(3) + std_u(3)*randn;
+    %u_apply(3) = u_apply(3) + std_u(3)*randn;
 
     u(:,k+1) = u_apply;
 
