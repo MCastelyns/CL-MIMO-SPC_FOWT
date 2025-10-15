@@ -10,41 +10,48 @@ Np       = 50;
 Nc       = 1;
 
 % PRBS amplitudes per input [beta(rad); tau(Nm)]  
-ampl_u = [0.03; 100];
+ampl_u = [0.03, 1000];
 
 % Weights
-Qy  = diag([100; 10000]);
-Ru  = diag([1; 1]);
-Rdu = diag([0.1; 0.1]);
+Qy  = diag([100]);
+Ru  = diag([1]);
+Rdu = diag([0.1]);
 
 % Input bounds
 beta_bound = deg2rad(2);
-umin  = [-beta_bound; -5e5];
-umax  = [ beta_bound;  5e5];
-dumin = [-10; -1e5];
-dumax = [ 10;  1e5];
+umin  = [-beta_bound];
+umax  = [ beta_bound];
+dumin = [-10];
+dumax = [ 10];
 
 load linearization_nrel5mw.mat sys
 sysd  = c2d(sys, Ts);
 [A,B,C,D] = ssdata(sysd);
 [Ny, Nu_full]  = size(D);
 
-Nu = 2; % Ignore wind for ID building
+% Input and output dimensions and channel numbers
+Nu = 1; %
+Ny = 1; % 
+idx_u = 1;
+idx_y = 2;
+
 
 % PRBS excitation
 u_batch = zeros(Nu, Tbatch);
 t_total = Tbatch*Ts;
 F = 1; 
-temp = idprbs(t_total, 1, Ts, F, [], [], Nu).';
-u_batch(1,:) = temp(1,1:Tbatch)*ampl_u(1);
-u_batch(2,:) = temp(2,1:Tbatch)*ampl_u(2);
+temp = idprbs(t_total, ampl_u(1), Ts, F).';
+u_batch(1,:) = temp(:,1:Tbatch);
+%temp = idprbs(t_total, ampl_u(2), Ts, F).';
+%u_batch(2,:) = temp(:,1:Tbatch);
 
 % Simulate true plant for batch
 x = zeros(size(A,1),1);
 y_batch = zeros(Ny, Tbatch);
 for k = 1:Tbatch
-    u_k_full = [u_batch(:,k); 0];
-    y_batch(:,k) = C*x + D*u_k_full;
+    u_k_full = [u_batch(:,k); 0; 0];
+    y_full = C*x + D*u_k_full;
+    y_batch(:,k) = y_full(idx_y,:);
     x            = A*x + B*u_k_full;
 end
 x_end = x;
@@ -183,9 +190,10 @@ for k = Tbatch : (T_total-1)
     u_apply = U_tilde(1:Nu);
     u(:,k+1) = u_apply;
 
-    u_full = [u_apply; 0];
+    u_full = [u_apply; 0; 0];
     xk = A*xk + B*u_full;
-    y(:,k+1) = C*xk + D*u_full;
+    y_full = C*xk + D*u_full;
+    y(:,k+1) = y_full(idx_y,:);
 
     us(:,k+1) = Du_inv * u(:,k+1);
     ys(:,k+1) = Dy_inv * y(:,k+1);
@@ -201,7 +209,7 @@ opt.PhaseWrappingBranch = 360;
 wmin = 1e-4; wmax = 0.9*pi/Ts;  
 figure('Color','w');
 bodeplot(G_final,{wmin,wmax},'r-.',opt); hold on;
-bodeplot(sysd(1:Ny,1:Nu),{wmin,wmax},'k',opt);     
+bodeplot(sysd(idx_y,idx_u),{wmin,wmax},'k',opt);     
 bodeplot(G_batch_strict,{wmin,wmax},'b--',opt);
 legend('Final ARX','True','Batch ARX ','Location','best');
 
@@ -211,25 +219,21 @@ t_online = (Tbatch:T_total-1)*Ts;
 
 figure('Color','w','Name','Batch');
 subplot(2,1,1);
-plot(t_batch, u_batch(1,:), 'LineWidth', 1.2); hold on;
-plot(t_batch, u_batch(2,:), 'LineWidth', 1.2);
+plot(t_batch, u_batch(1,:), 'LineWidth', 1.2);
 ylabel('Inputs'); legend('\beta','\tau'); grid on;
 
 subplot(2,1,2);
-plot(t_batch, y_batch(1,:), 'LineWidth', 1.2); hold on;
-plot(t_batch, y_batch(2,:), 'LineWidth', 1.2);
+plot(t_batch, y_batch(1,:), 'LineWidth', 1.2);
 ylabel('Outputs'); xlabel('Time [s]');
 legend('\omega_g','\theta_p'); grid on;
 
 figure('Color','w','Name','Online');
 subplot(2,1,1);
-plot(t_online, u(1,Tbatch+1:end), 'LineWidth', 1.2); hold on;
-plot(t_online, u(2,Tbatch+1:end), 'LineWidth', 1.2);
+plot(t_online, u(1,Tbatch+1:end), 'LineWidth', 1.2);
 ylabel('Inputs'); legend('\beta','\tau'); grid on;
 
 subplot(2,1,2);
-plot(t_online, y(1,Tbatch+1:end), 'LineWidth', 1.2); hold on;
-plot(t_online, y(2,Tbatch+1:end), 'LineWidth', 1.2);
+plot(t_online, y(1,Tbatch+1:end), 'LineWidth', 1.2);
 ylabel('Outputs'); xlabel('Time [s]');
 legend('\omega_g','\theta_p'); grid on;
 
